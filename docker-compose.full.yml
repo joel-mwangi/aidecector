@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: misinformation-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=development
+      - LOG_LEVEL=info
+      - GPU_ENABLED=false
+    volumes:
+      - ./src:/app/src
+      - ./uploads:/app/uploads
+      - ./models:/app/models
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - detection-net
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: misinformation-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+    depends_on:
+      - api
+    networks:
+      - detection-net
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: misinformation-db
+    environment:
+      POSTGRES_USER: detector
+      POSTGRES_PASSWORD: detector
+      POSTGRES_DB: misinformation
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U detector"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - detection-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: misinformation-cache
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - detection-net
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  detection-net:
+    driver: bridge

@@ -1,0 +1,137 @@
+services:
+  api:
+    build: .
+    container_name: misinformation-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - MODEL_CACHE_PATH=/app/models
+      - GPU_ENABLED=${GPU_ENABLED:-false}
+      - SUPABASE_URL=${SUPABASE_URL}
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./models:/app/models
+      - ./uploads:/app/uploads
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - detection-net
+    restart: unless-stopped
+
+  detection-queue:
+    build: .
+    container_name: detection-queue
+    command: python -m src.workers.detection_worker
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - MODEL_CACHE_PATH=/app/models
+      - GPU_ENABLED=${GPU_ENABLED:-false}
+      - WORKER_TYPE=detection
+    volumes:
+      - ./src:/app/src
+      - ./models:/app/models
+      - ./uploads:/app/uploads
+    depends_on:
+      - redis
+    networks:
+      - detection-net
+    restart: unless-stopped
+
+  visual-worker:
+    build: .
+    container_name: visual-worker
+    command: python -m src.workers.visual_worker
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - MODEL_CACHE_PATH=/app/models
+      - GPU_ENABLED=${GPU_ENABLED:-false}
+      - WORKER_TYPE=visual
+    volumes:
+      - ./src:/app/src
+      - ./models:/app/models
+      - ./uploads:/app/uploads
+    depends_on:
+      - redis
+    networks:
+      - detection-net
+    restart: unless-stopped
+
+  audio-worker:
+    build: .
+    container_name: audio-worker
+    command: python -m src.workers.audio_worker
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - MODEL_CACHE_PATH=/app/models
+      - GPU_ENABLED=${GPU_ENABLED:-false}
+      - WORKER_TYPE=audio
+    volumes:
+      - ./src:/app/src
+      - ./models:/app/models
+      - ./uploads:/app/uploads
+    depends_on:
+      - redis
+    networks:
+      - detection-net
+    restart: unless-stopped
+
+  claim-worker:
+    build: .
+    container_name: claim-worker
+    command: python -m src.workers.claim_worker
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - MODEL_CACHE_PATH=/app/models
+      - GPU_ENABLED=${GPU_ENABLED:-false}
+      - WORKER_TYPE=claim
+    volumes:
+      - ./src:/app/src
+      - ./models:/app/models
+      - ./uploads:/app/uploads
+    depends_on:
+      - redis
+    networks:
+      - detection-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: misinformation-cache
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - detection-net
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+
+networks:
+  detection-net:
+    driver: bridge

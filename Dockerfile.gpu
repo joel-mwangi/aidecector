@@ -1,0 +1,46 @@
+# GPU-enabled Dockerfile for NVIDIA CUDA
+
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+
+WORKDIR /app
+
+# Install Python and system dependencies
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3-pip \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create python symlink
+RUN ln -s /usr/bin/python3.11 /usr/bin/python
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies with CUDA support
+RUN pip install --no-cache-dir \
+    torch==2.1.0+cu121 torchvision==0.16.0+cu121 torchaudio==0.16.0+cu121 \
+    -f https://download.pytorch.org/whl/torch_stable.html
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application
+COPY src/ ./src/
+COPY models/ ./models/
+COPY config/ ./config/
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
+
+ENV CUDA_VISIBLE_DEVICES=0
+ENV GPU_ENABLED=true
+
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
