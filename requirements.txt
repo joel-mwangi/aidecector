@@ -53,7 +53,6 @@ pytest-cov==4.1.0
 python-dotenv==1.0.0
 pyyaml==6.0.1
 cryptography==41.0.7
-logging-structlog==23.2.0
 
 # GPU Optimization (optional)
 # torch-cuda-toolkit==12.1
