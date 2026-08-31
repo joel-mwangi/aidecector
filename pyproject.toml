@@ -37,7 +37,6 @@ dependencies = [
     "python-dotenv==1.0.0",
     "pyyaml==6.0.1",
     "cryptography==41.0.7",
-    "logging-structlog==23.2.0",
 ]
 
 [tool.vercel]
