@@ -1,2 +1,44 @@
+[project]
+name = "aidecector"
+version = "0.1.0"
+description = "Multimodal misinformation detection API"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.104.1",
+    "uvicorn==0.24.0",
+    "pydantic==2.5.0",
+    "python-multipart==0.0.6",
+    "torch==2.1.0",
+    "torchvision==0.16.0",
+    "torchaudio==2.1.0",
+    "transformers==4.35.2",
+    "protobuf==3.20.0",
+    "opencv-python==4.8.1.78",
+    "Pillow==10.1.0",
+    "scikit-image==0.22.0",
+    "librosa==0.10.0",
+    "resampy==0.4.2",
+    "waveform-analysis==0.2.0",
+    "numpy==1.24.3",
+    "scipy==1.11.4",
+    "scikit-learn==1.3.2",
+    "pandas==2.1.3",
+    "matplotlib==3.8.2",
+    "mediapipe==0.10.21",
+    "open-clip==2.24.0",
+    "ultralytics==8.0.227",
+    "resemblyzer==0.1.1",
+    "redis==5.0.1",
+    "psycopg2-binary==2.9.9",
+    "asyncpg==0.29.0",
+    "sqlalchemy==2.0.23",
+    "aiohttp==3.9.1",
+    "httpx==0.25.2",
+    "python-dotenv==1.0.0",
+    "pyyaml==6.0.1",
+    "cryptography==41.0.7",
+    "logging-structlog==23.2.0",
+]
+
 [tool.vercel]
 entrypoint = "src.api.main:app"
