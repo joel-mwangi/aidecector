@@ -19,7 +19,6 @@ scikit-image==0.22.0
 # Audio Processing
 librosa==0.10.0
 resampy==0.4.2
-waveform-analysis==0.2.0
 
 # Scientific Computing
 numpy==1.26.4
@@ -32,7 +31,6 @@ matplotlib==3.8.2
 mediapipe==0.10.21
 open-clip-torch==2.24.0
 ultralytics==8.0.227
-resemblyzer==0.1.1
 
 # Database & Caching
 redis==5.0.1
